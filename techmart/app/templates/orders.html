@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Mes commandes{% endblock %}
+{% block content %}
+
+<h1 class="section-title" style="margin-bottom:1.2rem">📦 Mes commandes</h1>
+
+<div class="alert alert-vuln">
+  ⚠️ <strong>IDOR :</strong> Les URLs /orders/1, /orders/2… sont accessibles par n'importe quel utilisateur connecté. Aucune vérification de propriété.
+</div>
+
+{% if orders %}
+<div class="card">
+  <table>
+    <thead>
+      <tr><th>#</th><th>Date</th><th>Total</th><th>Statut</th><th>Action</th></tr>
+    </thead>
+    <tbody>
+      {% for o in orders %}
+      <tr>
+        <td><strong>#{{ o.id }}</strong></td>
+        <td>{{ o.created_at[:10] }}</td>
+        <td class="fw-bold" style="color:var(--accent)">{{ "%.2f"|format(o.total) }} €</td>
+        <td>
+          {% if o.status == 'delivered' %}<span class="badge badge-success">✅ Livré</span>
+          {% elif o.status == 'shipped' %}<span class="badge badge-info">🚚 Expédié</span>
+          {% elif o.status == 'processing' %}<span class="badge badge-warning">⏳ En cours</span>
+          {% else %}<span class="badge badge-secondary">{{ o.status }}</span>{% endif %}
+        </td>
+        <td><a href="/orders/{{ o.id }}" class="btn btn-outline btn-sm">Voir →</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<div style="font-size:.82rem;color:var(--muted);margin-top:.5rem">
+  💡 Essayez d'accéder aux commandes des autres : <a href="/orders/1">/orders/1</a>, <a href="/orders/2">/orders/2</a>, <a href="/orders/3">/orders/3</a>…
+</div>
+{% else %}
+<div class="card" style="text-align:center;padding:3rem">
+  <div style="font-size:3rem;margin-bottom:1rem">📦</div>
+  <h3>Aucune commande</h3>
+  <a href="/products" class="btn btn-primary mt-2">Faire mes premiers achats</a>
+</div>
+{% endif %}
+{% endblock %}

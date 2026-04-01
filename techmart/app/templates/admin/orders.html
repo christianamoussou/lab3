@@ -1,0 +1,40 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Admin — Commandes{% endblock %}
+{% block admin_content %}
+<div class="card">
+  <div class="card-header">🛒 Toutes les commandes</div>
+  <div style="overflow-x:auto">
+  <table>
+    <thead><tr><th>#</th><th>Client</th><th>Total</th><th>Statut</th><th>Adresse</th><th>Date</th><th>Action</th></tr></thead>
+    <tbody>
+      {% for o in orders %}
+      <tr>
+        <td><a href="/orders/{{ o.id }}" class="fw-bold">#{{ o.id }}</a></td>
+        <td>{{ o.username }}</td>
+        <td class="fw-bold" style="color:var(--accent)">{{ "%.2f"|format(o.total) }}€</td>
+        <td>
+          {% if o.status=='delivered' %}<span class="badge badge-success">✅ Livré</span>
+          {% elif o.status=='shipped' %}<span class="badge badge-info">🚚 Expédié</span>
+          {% elif o.status=='processing' %}<span class="badge badge-warning">⏳ En cours</span>
+          {% else %}<span class="badge badge-secondary">{{ o.status }}</span>{% endif %}
+        </td>
+        <td style="font-size:.78rem;color:var(--muted);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ o.shipping_address }}</td>
+        <td style="font-size:.78rem;color:var(--muted)">{{ o.created_at[:10] }}</td>
+        <td>
+          <form method="post" action="/admin/order/{{ o.id }}/status" style="display:flex;gap:4px">
+            <select name="status" style="padding:3px 6px;font-size:.75rem;border-radius:4px;border:1px solid var(--border)">
+              <option value="processing" {% if o.status=='processing' %}selected{% endif %}>En cours</option>
+              <option value="shipped" {% if o.status=='shipped' %}selected{% endif %}>Expédié</option>
+              <option value="delivered" {% if o.status=='delivered' %}selected{% endif %}>Livré</option>
+              <option value="cancelled" {% if o.status=='cancelled' %}selected{% endif %}>Annulé</option>
+            </select>
+            <button type="submit" class="btn btn-sm btn-secondary" style="font-size:.75rem;padding:3px 8px">OK</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% endblock %}

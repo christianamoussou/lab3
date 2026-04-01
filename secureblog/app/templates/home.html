@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Accueil — SecureBlog{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Articles <span>récents</span></h1>
+
+<div class="alert alert-info">
+  🎯 <strong>Lab de démonstration actif.</strong>
+  Testez les vulnérabilités via les pages <a href="/login">Login</a>,
+  <a href="/search">Recherche</a> et les commentaires des articles.
+</div>
+
+{% if role == 'admin' %}
+<div class="alert alert-success">
+  🛡️ Connecté en tant qu'<strong>admin</strong>. Accès complet.
+</div>
+{% endif %}
+
+<div style="display:grid;gap:1rem;">
+  {% for post in posts %}
+  <div class="card">
+    <h2><a href="/post/{{ post.id }}">{{ post.title }}</a></h2>
+    <p>{{ post.content[:150] }}...</p>
+    <div style="margin-top:.8rem;font-size:.8rem;color:#4a5568;">
+      ✍️ {{ post.author }} &nbsp;|&nbsp; <a href="/post/{{ post.id }}">Lire & commenter →</a>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="card" style="margin-top:2rem;border-color:#744210;">
+  <h2 style="color:#f6ad55;">🧪 Aide-mémoire des vulnérabilités</h2>
+  <table style="width:100%;font-size:.85rem;border-collapse:collapse;margin-top:.8rem;">
+    <thead>
+      <tr style="color:#a0aec0;border-bottom:1px solid #2d3748;">
+        <th style="text-align:left;padding:6px">Page</th>
+        <th style="text-align:left;padding:6px">Type</th>
+        <th style="text-align:left;padding:6px">Payload de test</th>
+      </tr>
+    </thead>
+    <tbody style="color:#e2e8f0;">
+      <tr style="border-bottom:1px solid #1a1d27;">
+        <td style="padding:8px">/login</td>
+        <td style="padding:8px"><span style="color:#fc8181;">SQLi Bypass</span></td>
+        <td style="padding:8px;font-family:monospace;color:#f6ad55;">username: admin' --</td>
+      </tr>
+      <tr style="border-bottom:1px solid #1a1d27;">
+        <td style="padding:8px">/search</td>
+        <td style="padding:8px"><span style="color:#fc8181;">SQLi UNION</span></td>
+        <td style="padding:8px;font-family:monospace;color:#f6ad55;">%' UNION SELECT 1,info,3,4 FROM secret_data --</td>
+      </tr>
+      <tr style="border-bottom:1px solid #1a1d27;">
+        <td style="padding:8px">/search</td>
+        <td style="padding:8px"><span style="color:#9f7aea;">XSS Réfléchi</span></td>
+        <td style="padding:8px;font-family:monospace;color:#f6ad55;">&lt;script&gt;alert('XSS')&lt;/script&gt;</td>
+      </tr>
+      <tr style="border-bottom:1px solid #1a1d27;">
+        <td style="padding:8px">/post/1</td>
+        <td style="padding:8px"><span style="color:#9f7aea;">XSS Stocké</span></td>
+        <td style="padding:8px;font-family:monospace;color:#f6ad55;">&lt;img src=x onerror=alert(document.cookie)&gt;</td>
+      </tr>
+      <tr>
+        <td style="padding:8px">/profile</td>
+        <td style="padding:8px"><span style="color:#9f7aea;">XSS DOM</span></td>
+        <td style="padding:8px;font-family:monospace;color:#f6ad55;">?name=&lt;img src=x onerror=alert(1)&gt;</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+{% endblock %}

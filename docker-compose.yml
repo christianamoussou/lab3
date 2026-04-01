@@ -1,0 +1,114 @@
+services:
+  # ─── TechMart ───────────────────────────────
+  techmart_app:
+    build:
+      context: ./techmart           
+    container_name: techmart_app
+    ports:
+      - "5000:5000"
+    volumes:
+      - techmart_data:/app/data 
+    restart: unless-stopped
+    networks:
+      - lab_net
+
+  # ─── SecureBlog ─────────────────────────────
+  secureblog_app:
+    build:
+      context: ./secureblog/app          
+    container_name: secureblog_app
+    ports:
+      - "8000:5000"
+    volumes:
+      - secureblog_data:/app/data
+    restart: unless-stopped
+    networks:
+      - lab_net
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # ─── WAF UNIQUE ─────────────────────────────
+  waf:
+    build:
+      context: ./waf
+    container_name: central_waf
+    ports:
+      - "8080:8080"
+    environment:
+      # ─ Mode WAF ─
+      # DETECTION : log uniquement, ne bloque pas
+      # ENFORCEMENT : bloque les attaques (changer pour la démo "après WAF")
+      - MODSECURITY_SEC_RULE_ENGINE= "DetectionOnly"
+
+      # ─ Niveau de paranoïa OWASP CRS (1=normal, 4=très strict) ─
+      # Niveau 1 : Très peu de faux positifs, bloque uniquement les attaques évidentes.
+      # Niveau 2 (Ton choix) : Plus strict, idéal pour un site qui manipule des données sensibles (ton blog ou techmart).
+      # Niveau 3 & 4 : Extrêmement agressif, risque de bloquer des utilisateurs normaux
+      - PARANOIA=1
+      #- ANOMALY_INBOUND=3
+      #- ANOMALY_OUTBOUND=4
+      - MODSECURITY_AUDIT_LOG_FORMAT=JSON
+    volumes:
+      - ./nginx.conf:/etc/nginx/templates/conf.d/default.conf.template:ro
+      - waf_logs:/var/log/nginx
+    depends_on:
+      - techmart_app
+      - secureblog_app
+    restart: unless-stopped
+    networks:
+      - lab_net
+
+  # ─── LOKI ───────────────────────────────────
+  loki:
+    image: grafana/loki:2.9.0
+    container_name: loki
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    restart: unless-stopped
+    networks:
+      - lab_net
+
+  # ─── PROMTAIL ───────────────────────────────
+  promtail:
+    image: grafana/promtail:2.9.0
+    container_name: promtail
+    volumes:
+      - waf_logs:/var/log/nginx:ro
+      - ./promtail-config.yml:/etc/promtail/config.yml:ro
+    command: -config.file=/etc/promtail/config.yml
+    depends_on:
+      - loki
+    restart: unless-stopped
+    networks:
+      - lab_net
+
+  # ─── GRAFANA ────────────────────────────────
+  grafana:
+    image: grafana/grafana:10.2.0
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - loki
+    restart: unless-stopped
+    networks:
+      - lab_net
+
+volumes:
+  techmart_data:
+  secureblog_data:
+  waf_logs:
+  grafana_data:
+
+networks:
+  lab_net:
+    driver: bridge

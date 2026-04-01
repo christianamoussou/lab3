@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Connexion{% endblock %}
+{% block content %}
+
+<div style="max-width:460px;margin:0 auto">
+  <div class="card">
+    <div class="card-header" style="text-align:center;font-size:1.2rem">🔐 Connexion</div>
+
+    <div class="alert alert-vuln">
+      ⚠️ <strong>SQLi Bypass :</strong><br>
+      Username : <code>admin' --</code><br>
+      Username : <code>' OR '1'='1' --</code> (any user)<br>
+      Username : <code>' OR role='admin' --</code>
+    </div>
+
+    {% if error %}
+    <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+
+    <!-- ⚠️ Pas de CSRF token -->
+    <form method="post" action="/login">
+      <div class="form-group">
+        <label>Nom d'utilisateur <span class="vuln-tag">SQLi ici</span></label>
+        <input type="text" name="username" placeholder="admin, alice, bob, charlie" autofocus>
+      </div>
+      <div class="form-group">
+        <label>Mot de passe</label>
+        <input type="password" name="password" placeholder="Laissez vide si SQLi Bypass">
+      </div>
+      <button type="submit" class="btn btn-primary btn-lg btn-block">Se connecter</button>
+    </form>
+
+    {% if debug_query %}
+    <div class="debug-box" style="margin-top:1rem">
+      <span class="debug-label">🔍 REQUÊTE SQL EXÉCUTÉE</span>
+      {{ debug_query }}
+    </div>
+    {% endif %}
+
+    <hr style="margin:1.2rem 0">
+    <div style="font-size:.82rem;color:var(--muted);text-align:center">
+      Comptes de test :<br>
+      <code>admin</code> / <code>Admin@1234</code> &nbsp;·&nbsp;
+      <code>alice</code> / <code>alice123</code><br>
+      <code>bob</code> / <code>bob456</code> &nbsp;·&nbsp;
+      <code>charlie</code> / <code>charlie789</code>
+    </div>
+    <hr style="margin:1rem 0">
+    <div style="text-align:center;font-size:.87rem">
+      Pas de compte ? <a href="/register">S'inscrire</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

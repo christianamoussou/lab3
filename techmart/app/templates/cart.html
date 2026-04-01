@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}Panier{% endblock %}
+{% block content %}
+
+<h1 class="section-title" style="margin-bottom:1.2rem">🛒 Mon panier</h1>
+
+{% if not items %}
+<div class="card" style="text-align:center;padding:3rem">
+  <div style="font-size:3.5rem;margin-bottom:1rem">🛒</div>
+  <h3 style="margin-bottom:.5rem">Votre panier est vide</h3>
+  <a href="/products" class="btn btn-primary mt-2">Découvrir les produits</a>
+</div>
+{% else %}
+
+<div class="layout-sidebar">
+  <div>
+    <!-- Cart items -->
+    <div class="card">
+      <div class="card-header">Articles ({{ items|length }})</div>
+      {% for item in items %}
+      <div style="display:flex;align-items:center;gap:1rem;padding:.9rem 0;border-bottom:1px solid var(--border)">
+        <div style="font-size:2.5rem;width:60px;text-align:center">{{ item.product.icon }}</div>
+        <div style="flex:1">
+          <div style="font-weight:600;font-size:.9rem">{{ item.product.name }}</div>
+          <div style="font-size:.82rem;color:var(--muted)">{{ "%.0f"|format(item.product.price) }} € × {{ item.qty }}</div>
+        </div>
+        <div style="font-weight:700;color:var(--accent)">{{ "%.0f"|format(item.subtotal) }} €</div>
+        <form method="post" action="/cart/remove">
+          <input type="hidden" name="product_id" value="{{ item.product.id }}">
+          <button type="submit" class="btn btn-outline btn-sm" style="color:#e94560;border-color:#fca5a5">✕</button>
+        </form>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- CSRF demo -->
+    <div class="alert alert-vuln">
+      ⚠️ <strong>CSRF :</strong> Les formulaires /cart/add, /cart/remove et /cart/coupon n'ont aucun token CSRF.
+      Une page externe peut déclencher ces actions sans que l'utilisateur ne le sache.
+    </div>
+  </div>
+
+  <div>
+    <!-- Coupon - SQLi vuln -->
+    <div class="card">
+      <div class="card-header">
+        🎟️ Code promo
+        <span class="vuln-tag" style="margin-left:.5rem">SQLi Coupon</span>
+      </div>
+      <div class="alert alert-vuln" style="font-size:.75rem">
+        <strong>SQLi Coupon :</strong> <code>PROMO10' OR '1'='1</code> → active coupon ADMIN50 (-50%) !
+      </div>
+      <form method="post" action="/cart/coupon">
+        <!-- ⚠️ Pas de CSRF token -->
+        <div style="display:flex;gap:.5rem">
+          <input type="text" name="code" placeholder="PROMO10' OR 1=1 --" style="flex:1">
+          <button type="submit" class="btn btn-success">Appliquer</button>
+        </div>
+        <div style="font-size:.75rem;color:var(--muted);margin-top:.5rem">Codes valides : PROMO10 · SAVE20 · TECHMART | SQLi : PROMO10' OR 1=1 --</div>
+      </form>
+    </div>
+
+    <!-- Summary -->
+    <div class="card">
+      <div class="card-header">Récapitulatif</div>
+      <table>
+        <tr>
+          <td>Sous-total</td>
+          <td class="text-right fw-bold">{{ "%.2f"|format(total) }} €</td>
+        </tr>
+        {% if discount > 0 %}
+        <tr>
+          <td class="text-success">Réduction ({{ discount }}%)</td>
+          <td class="text-right text-success fw-bold">-{{ "%.2f"|format(total * discount / 100) }} €</td>
+        </tr>
+        {% endif %}
+        <tr>
+          <td>Livraison</td>
+          <td class="text-right" style="color:var(--success)">Gratuite 🎁</td>
+        </tr>
+        <tr style="font-size:1.1rem;border-top:2px solid var(--border)">
+          <td class="fw-bold">Total</td>
+          <td class="text-right fw-bold" style="color:var(--accent)">{{ "%.2f"|format(final_total) }} €</td>
+        </tr>
+      </table>
+      <hr style="margin:.8rem 0">
+      <a href="/checkout" class="btn btn-primary btn-lg btn-block">Commander maintenant →</a>
+      <a href="/products" class="btn btn-outline btn-sm btn-block mt-1">← Continuer les achats</a>
+    </div>
+  </div>
+</div>
+
+{% endif %}
+{% endblock %}

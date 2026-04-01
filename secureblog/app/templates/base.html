@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}SecureBlog{% endblock %}</title>
+  <style>
+    /* ── Reset & Base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      min-height: 100vh;
+    }
+
+    a { color: #63b3ed; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ── Navbar ── */
+    nav {
+      background: #1a1d27;
+      border-bottom: 1px solid #2d3748;
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 60px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .nav-brand {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #f56565;
+      letter-spacing: 1px;
+    }
+    .nav-brand span { color: #63b3ed; }
+    .nav-links { display: flex; gap: 1.5rem; align-items: center; }
+    .nav-links a { color: #a0aec0; font-size: 0.9rem; }
+    .nav-links a:hover { color: #e2e8f0; }
+    .nav-user {
+      background: #2d3748;
+      border-radius: 20px;
+      padding: 4px 14px;
+      font-size: 0.85rem;
+      color: #68d391;
+    }
+
+    /* ── Banner de vulnérabilité ── */
+    .vuln-banner {
+      background: linear-gradient(90deg, #742a2a, #c53030);
+      color: #fff5f5;
+      padding: 8px 2rem;
+      font-size: 0.82rem;
+      text-align: center;
+      letter-spacing: 0.5px;
+    }
+    .vuln-banner strong { color: #fed7d7; }
+
+    /* ── Container ── */
+    .container {
+      max-width: 960px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+    }
+
+    /* ── Cards ── */
+    .card {
+      background: #1a1d27;
+      border: 1px solid #2d3748;
+      border-radius: 10px;
+      padding: 1.5rem;
+      margin-bottom: 1.2rem;
+    }
+    .card h2 { font-size: 1.15rem; margin-bottom: 0.5rem; color: #63b3ed; }
+    .card p  { color: #a0aec0; font-size: 0.9rem; line-height: 1.6; }
+
+    /* ── Forms ── */
+    .form-group { margin-bottom: 1.2rem; }
+    label { display: block; margin-bottom: 6px; font-size: 0.88rem; color: #a0aec0; }
+    input[type=text], input[type=password], textarea {
+      width: 100%;
+      background: #0f1117;
+      border: 1px solid #2d3748;
+      border-radius: 6px;
+      padding: 10px 14px;
+      color: #e2e8f0;
+      font-size: 0.95rem;
+      transition: border-color .2s;
+    }
+    input:focus, textarea:focus {
+      outline: none;
+      border-color: #63b3ed;
+    }
+    textarea { resize: vertical; min-height: 100px; }
+
+    .btn {
+      display: inline-block;
+      padding: 10px 22px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: opacity .2s;
+    }
+    .btn:hover { opacity: .85; }
+    .btn-primary { background: #3182ce; color: #fff; }
+    .btn-danger  { background: #e53e3e; color: #fff; }
+    .btn-success { background: #38a169; color: #fff; }
+
+    /* ── Alerts ── */
+    .alert {
+      padding: 12px 16px;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+    }
+    .alert-error   { background: #742a2a; border-left: 4px solid #fc8181; color: #fed7d7; }
+    .alert-success { background: #1c4532; border-left: 4px solid #68d391; color: #c6f6d5; }
+    .alert-info    { background: #1a365d; border-left: 4px solid #63b3ed; color: #bee3f8; }
+
+    /* ── Debug box (mode démo) ── */
+    .debug-box {
+      background: #0d1117;
+      border: 1px dashed #f6ad55;
+      border-radius: 6px;
+      padding: 12px 16px;
+      margin-top: 1rem;
+      font-family: monospace;
+      font-size: 0.82rem;
+      color: #f6ad55;
+    }
+    .debug-box .label {
+      color: #fc8181;
+      font-weight: bold;
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    /* ── Page title ── */
+    .page-title {
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      color: #e2e8f0;
+    }
+    .page-title span { color: #f56565; }
+
+    /* ── Comment block ── */
+    .comment {
+      border-left: 3px solid #2d3748;
+      padding: 10px 16px;
+      margin-bottom: 10px;
+      background: #0f1117;
+      border-radius: 0 6px 6px 0;
+    }
+    .comment .author { font-size: 0.8rem; color: #68d391; margin-bottom: 4px; }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 2rem;
+      color: #4a5568;
+      font-size: 0.8rem;
+      border-top: 1px solid #1a1d27;
+      margin-top: 4rem;
+    }
+  </style>
+</head>
+<body>
+
+<div class="vuln-banner">
+  ⚠️ <strong>ENVIRONNEMENT DE TEST</strong> — Application volontairement vulnérable. Usage strictement pédagogique.
+</div>
+
+<nav>
+  <div class="nav-brand">Secure<span>Blog</span> <span style="font-size:.7rem;color:#f6ad55;">[ VULN ]</span></div>
+  <div class="nav-links">
+    <a href="/">Accueil</a>
+    <a href="/search">Recherche</a>
+    <a href="/profile?name=Visiteur">Profil</a>
+    {% if user %}
+      <span class="nav-user">👤 {{ user }}</span>
+      <a href="/logout">Déconnexion</a>
+    {% else %}
+      <a href="/login">Connexion</a>
+    {% endif %}
+  </div>
+</nav>
+
+<div class="container">
+  {% block content %}{% endblock %}
+</div>
+
+<footer>SecureBlog © 2025 — TP Sécurité Web — Détection & Prévention SQLi / XSS</footer>
+
+</body>
+</html>
