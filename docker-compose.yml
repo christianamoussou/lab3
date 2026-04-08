@@ -1,36 +1,45 @@
 services:
-  # ─── TechMart ───────────────────────────────
-  techmart_app:
-    build:
-      context: ./techmart           
-    container_name: techmart_app
-    ports:
-      - "5000:5000"
-    volumes:
-      - techmart_data:/app/data 
-    restart: unless-stopped
-    networks:
-      - lab_net
 
-  # ─── SecureBlog ─────────────────────────────
-  secureblog_app:
-    build:
-      context: ./secureblog/app          
-    container_name: secureblog_app
-    ports:
-      - "8000:5000"
+  # ─── PostgreSQL ──────────────────────────────────────────────
+  db:
+    image: postgres:15-alpine
+    container_name: techmart_db
+    environment:
+      POSTGRES_DB:       techmart
+      POSTGRES_USER:     techmart
+      POSTGRES_PASSWORD: techmart123
     volumes:
-      - secureblog_data:/app/data
+      - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
     networks:
       - lab_net
     healthcheck:
-      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000')"]
-      interval: 10s
+      test: ["CMD-SHELL", "pg_isready -U techmart -d techmart"]
+      interval: 5s
       timeout: 5s
-      retries: 3
+      retries: 10
 
-  # ─── WAF UNIQUE ─────────────────────────────
+  # ─── TechMart ────────────────────────────────────────────────
+  techmart_app:
+    build:
+      context: ./techmart
+    container_name: techmart_app
+    environment:
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_NAME: techmart
+      DB_USER: techmart
+      DB_PASS: techmart123
+    ports:
+      - "5000:5000"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - lab_net
+
+  # ─── WAF ─────────────────────────────────────────────────────
   waf:
     build:
       context: ./waf
@@ -38,30 +47,22 @@ services:
     ports:
       - "8080:8080"
     environment:
-      # ─ Mode WAF ─
-      # DETECTION : log uniquement, ne bloque pas
-      # ENFORCEMENT : bloque les attaques (changer pour la démo "après WAF")
-      - MODSECURITY_SEC_RULE_ENGINE= "DetectionOnly"
-
-      # ─ Niveau de paranoïa OWASP CRS (1=normal, 4=très strict) ─
-      # Niveau 1 : Très peu de faux positifs, bloque uniquement les attaques évidentes.
-      # Niveau 2 (Ton choix) : Plus strict, idéal pour un site qui manipule des données sensibles (ton blog ou techmart).
-      # Niveau 3 & 4 : Extrêmement agressif, risque de bloquer des utilisateurs normaux
-      - PARANOIA=1
-      #- ANOMALY_INBOUND=3
-      #- ANOMALY_OUTBOUND=4
+      #- MODSECURITY_SEC_RULE_ENGINE=DetectionOnly
+      #- SEC_RULE_ENGINE=DetectionOnly
+      - MODSECURITY_SEC_RULE_ENGINE=On
+      - SEC_RULE_ENGINE=On
+      - PARANOIA=2
       - MODSECURITY_AUDIT_LOG_FORMAT=JSON
     volumes:
       - ./nginx.conf:/etc/nginx/templates/conf.d/default.conf.template:ro
       - waf_logs:/var/log/nginx
     depends_on:
       - techmart_app
-      - secureblog_app
     restart: unless-stopped
     networks:
       - lab_net
 
-  # ─── LOKI ───────────────────────────────────
+  # ─── Loki ────────────────────────────────────────────────────
   loki:
     image: grafana/loki:2.9.0
     container_name: loki
@@ -72,7 +73,7 @@ services:
     networks:
       - lab_net
 
-  # ─── PROMTAIL ───────────────────────────────
+  # ─── Promtail ────────────────────────────────────────────────
   promtail:
     image: grafana/promtail:2.9.0
     container_name: promtail
@@ -86,7 +87,7 @@ services:
     networks:
       - lab_net
 
-  # ─── GRAFANA ────────────────────────────────
+  # ─── Grafana ─────────────────────────────────────────────────
   grafana:
     image: grafana/grafana:10.2.0
     container_name: grafana
@@ -104,8 +105,7 @@ services:
       - lab_net
 
 volumes:
-  techmart_data:
-  secureblog_data:
+  postgres_data:
   waf_logs:
   grafana_data:
 
