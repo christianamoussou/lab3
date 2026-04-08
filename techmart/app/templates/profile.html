@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% block title %}Mon profil{% endblock %}
+{% block content %}
+
+<h1 class="section-title" style="margin-bottom:1.2rem">👤 Mon profil — {{ current_user }}</h1>
+
+{% if msg %}<div class="alert alert-success">{{ msg }}</div>{% endif %}
+{% if pwd_error %}<div class="alert alert-danger">{{ pwd_error }}</div>{% endif %}
+
+<div class="tabs" id="main-tabs">
+  <div class="tab" id="tab-info" onclick="gotoTab('info')">📋 Informations</div>
+  <div class="tab" id="tab-orders" onclick="gotoTab('orders')">📦 Commandes</div>
+  <div class="tab" id="tab-security" onclick="gotoTab('security')">🔐 Sécurité</div>
+</div>
+
+<!-- Infos personnelles -->
+<div class="tab-pane" id="pane-info">
+<div class="layout-sidebar" style="align-items:start">
+  <div>
+    <div class="card">
+      <div class="card-header">📋 Informations personnelles</div>
+      <form method="post" action="/profile">
+        <div class="form-group">
+          <label>Nom d'utilisateur</label>
+          <input type="text" value="{{ user.username }}" disabled style="background:#f8fafc;color:var(--muted)">
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" value="{{ user.email }}" disabled style="background:#f8fafc;color:var(--muted)">
+        </div>
+        <div class="form-group">
+          <label>Téléphone</label>
+          <input type="tel" name="phone" value="{{ user.phone or '' }}" placeholder="0601020304">
+        </div>
+        <div class="form-group">
+          <label>Adresse de livraison par défaut</label>
+          <textarea name="address" style="height:70px" placeholder="15 rue de la Paix, 75001 Paris">{{ user.address or '' }}</textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Mettre à jour</button>
+      </form>
+    </div>
+  </div>
+
+  <div>
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:.8rem;margin-bottom:.8rem">
+        <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#0f3460);display:flex;align-items:center;justify-content:center;font-size:1.4rem;color:#fff">
+          {{ current_user[0].upper() }}
+        </div>
+        <div>
+          <div class="fw-bold">{{ user.username }}</div>
+          <div style="font-size:.8rem;color:var(--muted)">{{ user.email }}</div>
+          <span class="badge {{ 'badge-danger' if user.role=='admin' else 'badge-secondary' }}" style="font-size:.68rem;margin-top:2px">{{ user.role }}</span>
+        </div>
+      </div>
+      <hr>
+      <table>
+        <tr><td style="font-size:.82rem;color:var(--muted);padding:5px 0">Membre depuis</td><td style="font-size:.82rem">{{ user.created_at|dt }}</td></tr>
+        <tr><td style="font-size:.82rem;color:var(--muted);padding:5px 0">Commandes</td><td class="fw-bold">{{ user_orders|length }}+</td></tr>
+      </table>
+    </div>
+
+    <div class="card" style="padding:1rem">
+      <div style="font-size:.85rem;font-weight:600;margin-bottom:.5rem">🪙 TechCoins</div>
+      <div style="font-size:1.8rem;font-weight:800;color:#fbbf24">{{ "%.2f"|format(wallet_balance or 0) }} TC</div>
+      <div style="font-size:.75rem;color:var(--muted);margin-bottom:.5rem">≈ {{ "%.2f"|format((wallet_balance or 0)) }} €</div>
+      <a href="/wallet" class="btn btn-outline btn-sm w-100">Gérer mes TechCoins →</a>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- Commandes -->
+<div class="tab-pane" id="pane-orders" style="display:none">
+{% if user_orders %}
+<div class="card">
+  <div class="card-header">📦 Dernières commandes</div>
+  <table>
+    <thead><tr><th>Numéro</th><th>Date</th><th>Paiement</th><th>Total</th><th>Statut</th><th></th></tr></thead>
+    <tbody>
+    {% for o in user_orders %}
+    <tr>
+      <td class="fw-bold" style="font-size:.85rem">{{ o.order_number or ('#'+o.id|string) }}</td>
+      <td style="color:var(--muted);font-size:.82rem">{{ o.created_at|dt }}</td>
+      <td style="font-size:.82rem">
+        {% if o.payment_method=='techcoins' %}<span style="color:#f59e0b">🪙 TC</span>
+        {% else %}<span style="color:var(--muted)">💳</span>{% endif %}
+      </td>
+      <td class="fw-bold" style="color:var(--accent)">{{ "%.2f"|format(o.total) }} €</td>
+      <td>
+        {% if o.status=='delivered' %}<span class="badge badge-success" style="font-size:.68rem">Livré</span>
+        {% elif o.status=='shipped' %}<span class="badge badge-info" style="font-size:.68rem">Expédié</span>
+        {% elif o.status=='cancelled' %}<span class="badge badge-danger" style="font-size:.68rem">Annulé</span>
+        {% else %}<span class="badge badge-warning" style="font-size:.68rem">{{ o.status }}</span>{% endif %}
+      </td>
+      <td><a href="/orders/{{ o.id }}" class="btn btn-outline btn-sm">Voir</a></td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <a href="/orders" class="btn btn-outline btn-sm btn-block mt-2">Toutes mes commandes →</a>
+</div>
+{% else %}
+<div class="card" style="text-align:center;padding:2rem">
+  <div style="font-size:2.5rem;margin-bottom:.5rem">📦</div>
+  <p style="color:var(--muted)">Aucune commande pour l'instant.</p>
+  <a href="/products" class="btn btn-primary mt-1">Découvrir les produits</a>
+</div>
+{% endif %}
+</div>
+
+<!-- Sécurité -->
+<div class="tab-pane" id="pane-security" style="display:none">
+<div class="layout-sidebar" style="align-items:start">
+  <div>
+    <div class="card">
+      <div class="card-header">🔑 Changer mon mot de passe</div>
+      <form method="post" action="/profile/change-password">
+        <div class="form-group">
+          <label>Mot de passe actuel</label>
+          <input type="password" name="current_password" placeholder="Votre mot de passe actuel" required autocomplete="current-password">
+        </div>
+        <div class="form-group">
+          <label>Nouveau mot de passe</label>
+          <input type="password" name="new_password" id="new-pwd" placeholder="Nouveau mot de passe" minlength="4" required autocomplete="new-password" oninput="checkStr()">
+          <div class="pwd-strength" id="pwd-bar" style="width:0"></div>
+          <div id="pwd-lbl" class="pwd-label" style="color:var(--muted)"></div>
+        </div>
+        <div class="form-group">
+          <label>Confirmer le nouveau mot de passe</label>
+          <input type="password" name="confirm_password" placeholder="Répéter le nouveau mot de passe" required autocomplete="new-password">
+        </div>
+        <button type="submit" class="btn btn-primary">🔑 Modifier le mot de passe</button>
+      </form>
+    </div>
+  </div>
+  <div>
+    <div class="card">
+      <div class="card-header">ℹ️ Infos compte</div>
+      <table>
+        <tr><td style="font-size:.82rem;color:var(--muted);padding:6px 0">Identifiant</td><td class="fw-bold">{{ user.username }}</td></tr>
+        <tr><td style="font-size:.82rem;color:var(--muted);padding:6px 0">Email</td><td>{{ user.email }}</td></tr>
+        <tr><td style="font-size:.82rem;color:var(--muted);padding:6px 0">Rôle</td><td><span class="badge {{ 'badge-danger' if user.role=='admin' else 'badge-secondary' }}">{{ user.role }}</span></td></tr>
+        <tr><td style="font-size:.82rem;color:var(--muted);padding:6px 0">Inscrit le</td><td>{{ user.created_at|dt }}</td></tr>
+      </table>
+      <hr>
+      <a href="/logout" class="btn btn-danger btn-sm btn-block">Se déconnecter</a>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+var curTab = "{{ tab or 'info' }}";
+function gotoTab(t) {
+  curTab = t;
+  document.querySelectorAll('.tab-pane').forEach(function(p){p.style.display='none';});
+  document.querySelectorAll('.tab').forEach(function(b){b.classList.remove('active');});
+  document.getElementById('pane-'+t).style.display='block';
+  document.getElementById('tab-'+t).classList.add('active');
+  history.replaceState(null,'','/profile?tab='+t);
+}
+function checkStr(){
+  var p=document.getElementById('new-pwd').value;
+  var bar=document.getElementById('pwd-bar');
+  var lbl=document.getElementById('pwd-lbl');
+  bar.className='pwd-strength';
+  if(!p.length){bar.style.width='0';lbl.textContent='';return;}
+  var s=0;if(p.length>=8)s++;if(/[A-Z]/.test(p))s++;if(/[0-9]/.test(p))s++;if(/[^A-Za-z0-9]/.test(p))s++;
+  if(s<=1){bar.classList.add('weak');lbl.textContent='Faible';lbl.style.color='#e94560';}
+  else if(s<=2){bar.classList.add('medium');lbl.textContent='Moyen';lbl.style.color='#ffc107';}
+  else{bar.classList.add('strong');lbl.textContent='Fort';lbl.style.color='#28a745';}
+}
+// Init tab on load
+gotoTab(curTab);
+</script>
+{% endblock %}

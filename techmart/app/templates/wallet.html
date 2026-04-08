@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% block title %}Portefeuille TechCoins{% endblock %}
+{% block content %}
+
+<div class="section-header">
+  <h1 class="section-title">🪙 Portefeuille <span>TechCoins</span></h1>
+</div>
+
+{% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+{% if success %}<div class="alert alert-success">{{ success }}</div>{% endif %}
+
+<div style="display:grid;grid-template-columns:320px 1fr;gap:1.3rem;align-items:start">
+  <!-- Solde -->
+  <div>
+    <div style="background:linear-gradient(135deg,var(--primary),#0f3460);border-radius:var(--r);padding:2rem;color:#fff;text-align:center;margin-bottom:1.1rem">
+      <div style="font-size:3rem;margin-bottom:.5rem">🪙</div>
+      <div style="font-size:.85rem;color:#94a3b8;margin-bottom:.4rem">Votre solde</div>
+      <div style="font-size:2.8rem;font-weight:800;color:#fbbf24">{{ "%.2f"|format(balance) }}</div>
+      <div style="font-size:1rem;color:#94a3b8">TechCoins</div>
+      <hr style="border-color:rgba(255,255,255,.1);margin:1rem 0">
+      <div style="font-size:.8rem;color:#64748b">1 TechCoin = 1,00 €</div>
+      <div style="font-size:.8rem;color:#64748b">≈ {{ "%.2f"|format(balance * tc_rate) }} €</div>
+    </div>
+
+    <div class="card">
+      <div class="card-header" style="font-size:.9rem">ℹ️ À propos des TechCoins</div>
+      <div style="font-size:.82rem;color:var(--muted);line-height:1.7">
+        <p>🪙 Les TechCoins sont la monnaie virtuelle exclusive de TechMart.</p>
+        <p style="margin-top:.5rem">💳 Achetez des TechCoins avec votre carte bancaire et utilisez-les lors de vos commandes.</p>
+        <p style="margin-top:.5rem">✅ Taux fixe : <strong>1 TC = 1 €</strong></p>
+        <p style="margin-top:.5rem">🛒 Disponibles à la caisse comme mode de paiement.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Achat -->
+  <div>
+    <div class="card">
+      <div class="card-header">💳 Acheter des TechCoins</div>
+
+      <div class="card-preview" id="card-preview">
+        <div class="card-chip"></div>
+        <div class="card-num" id="prev-num">•••• •••• •••• ••••</div>
+        <div class="card-meta">
+          <div><div style="font-size:.65rem;opacity:.6">TITULAIRE</div><div id="prev-name">VOTRE NOM</div></div>
+          <div><div style="font-size:.65rem;opacity:.6">EXPIRE</div><div id="prev-exp">MM/AA</div></div>
+          <div style="font-size:1.4rem;opacity:.6">VISA</div>
+        </div>
+      </div>
+
+      <form method="post" action="/wallet/buy" id="buy-form" novalidate>
+        <div class="form-group">
+          <label>Montant à acheter (TC)</label>
+          <div style="position:relative">
+            <input type="number" name="amount" id="amount" min="10" max="500" step="10"
+                   placeholder="Ex : 50" required oninput="updateTotal()">
+            <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:.82rem">TC</span>
+          </div>
+          <div style="font-size:.75rem;color:var(--muted);margin-top:3px">Min : 10 TC · Max : 500 TC par transaction</div>
+          <div id="total-display" style="font-size:.85rem;color:var(--accent);font-weight:700;margin-top:5px;display:none"></div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem;margin-bottom:1rem">
+          <button type="button" class="btn btn-outline btn-sm" onclick="setAmt(10)">10 TC</button>
+          <button type="button" class="btn btn-outline btn-sm" onclick="setAmt(25)">25 TC</button>
+          <button type="button" class="btn btn-outline btn-sm" onclick="setAmt(50)">50 TC</button>
+          <button type="button" class="btn btn-outline btn-sm" onclick="setAmt(100)">100 TC</button>
+        </div>
+
+        <hr>
+        <div style="font-size:.88rem;font-weight:600;color:var(--text);margin-bottom:.8rem">Informations de paiement</div>
+
+        <div class="form-group">
+          <label>Numéro de carte</label>
+          <input type="tel" name="card_number" id="card-number" placeholder="1234 5678 9012 3456" maxlength="19"
+                 oninput="fmtCard(this)" autocomplete="cc-number" required>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem">
+          <div class="form-group">
+            <label>Expiration</label>
+            <input type="tel" name="card_expiry" id="card-expiry" placeholder="MM/AA" maxlength="5"
+                   oninput="fmtExp(this)" autocomplete="cc-exp" required>
+          </div>
+          <div class="form-group">
+            <label>CVV</label>
+            <input type="tel" name="card_cvv" id="card-cvv" placeholder="123" maxlength="3"
+                   autocomplete="cc-csc" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Nom du titulaire</label>
+          <input type="text" name="card_name" id="card-name" placeholder="ALICE DUPONT"
+                 oninput="document.getElementById('prev-name').textContent=this.value.toUpperCase()||'VOTRE NOM'"
+                 autocomplete="cc-name">
+        </div>
+
+        <div id="buy-error" class="alert alert-danger" style="display:none"></div>
+        <button type="button" onclick="validateAndBuy()" class="btn btn-primary btn-lg btn-block">
+          🪙 Acheter les TechCoins
+        </button>
+        <div style="font-size:.75rem;color:var(--muted);text-align:center;margin-top:.5rem">
+          🔒 Paiement sécurisé SSL · Crédité instantanément
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function setAmt(v){document.getElementById('amount').value=v;updateTotal();}
+function updateTotal(){
+  var a=parseFloat(document.getElementById('amount').value)||0;
+  var d=document.getElementById('total-display');
+  if(a>0){d.textContent='Montant débité : '+a.toFixed(2)+' € → +'+a.toFixed(0)+' TC crédités';d.style.display='block';}
+  else d.style.display='none';
+}
+function fmtCard(el){
+  var v=el.value.replace(/\D/g,'').substring(0,16);
+  el.value=v.replace(/(.{4})/g,'$1 ').trim();
+  document.getElementById('prev-num').textContent=v.padEnd(16,'•').replace(/(.{4})/g,'$1 ').trim();
+}
+function fmtExp(el){
+  var v=el.value.replace(/\D/g,'');
+  if(v.length>=2)v=v.substring(0,2)+'/'+v.substring(2,4);
+  el.value=v;
+  document.getElementById('prev-exp').textContent=el.value||'MM/AA';
+}
+function luhn(n){var s=n.replace(/\D/g,''),sum=0,alt=false;for(var i=s.length-1;i>=0;i--){var d=+s[i];if(alt){d*=2;if(d>9)d-=9;}sum+=d;alt=!alt;}return sum%10===0;}
+function validateAndBuy(){
+  var amt=parseFloat(document.getElementById('amount').value)||0;
+  var cn=document.getElementById('card-number').value.replace(/\s/g,'');
+  var exp=document.getElementById('card-expiry').value;
+  var cvv=document.getElementById('card-cvv').value;
+  var err=document.getElementById('buy-error');
+  if(amt<10||amt>500){err.textContent='Montant invalide (10 à 500 TC).';err.style.display='block';return;}
+  if(cn.length<16){err.textContent='Numéro de carte incomplet.';err.style.display='block';return;}
+  if(!luhn(cn)){err.textContent='Numéro de carte invalide (vérification Luhn échouée).';err.style.display='block';return;}
+  if(exp.length<5){err.textContent='Date d\'expiration invalide.';err.style.display='block';return;}
+  if(cvv.length<3){err.textContent='CVV invalide.';err.style.display='block';return;}
+  err.style.display='none';
+  document.getElementById('buy-form').submit();
+}
+</script>
+{% endblock %}

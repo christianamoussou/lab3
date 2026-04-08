@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}{{ category.name if category else 'Catégorie' }}{% endblock %}
+{% block content %}
+
+{% if not category %}
+<div class="alert alert-danger">Catégorie introuvable.</div>
+{% else %}
+
+<div class="breadcrumb">
+  <a href="/">Accueil</a><span class="breadcrumb-sep">›</span>
+  <span>{{ category.name }}</span>
+</div>
+
+<div class="section-header">
+  <h1 class="section-title">{{ category.icon }} {{ category.name }}</h1>
+  <div style="display:flex;align-items:center;gap:.5rem;font-size:.85rem">
+    Trier :
+    <span class="vuln-tag">XSS DOM ici</span>
+    <!-- ⚠️ XSS DOM : ?sort= injecté dans innerHTML -->
+    <span id="sort-display" style="color:var(--accent);font-weight:600">{{ sort }}</span>
+    <select onchange="window.location='/category/{{ category.id }}?sort='+this.value" style="padding:4px 8px;border-radius:4px;border:1px solid var(--border);font-size:.82rem">
+      <option value="popular" {% if sort=='popular' %}selected{% endif %}>Popularité</option>
+      <option value="price_asc" {% if sort=='price_asc' %}selected{% endif %}>Prix ↑</option>
+      <option value="price_desc" {% if sort=='price_desc' %}selected{% endif %}>Prix ↓</option>
+      <option value="rating" {% if sort=='rating' %}selected{% endif %}>Meilleures notes</option>
+    </select>
+  </div>
+</div>
+
+
+
+{% if products %}
+<div class="product-grid">
+  {% for p in products %}
+  <div class="product-card" onclick="window.location='/product/{{ p.id }}'">
+    <div class="product-img" style="background:linear-gradient(135deg,{{ p.cat_color }}18,{{ p.cat_color }}45)">
+      {% if p.badge %}<span class="product-badge">{{ p.badge }}</span>{% endif %}
+      {{ p.icon }}
+    </div>
+    <div class="product-info">
+      <div class="product-name">{{ p.name }}</div>
+      <div class="product-rating"><span class="stars">★★★★★</span> {{ p.rating }} ({{ p.review_count }})</div>
+      <div class="product-price-row">
+        <div>
+          <div class="product-price">{{ "%.0f"|format(p.price) }} €</div>
+          {% if p.old_price %}<div class="product-old">{{ "%.0f"|format(p.old_price) }} €</div>{% endif %}
+        </div>
+        <form method="post" action="/cart/add" onclick="event.stopPropagation()">
+          <input type="hidden" name="product_id" value="{{ p.id }}">
+          <input type="hidden" name="qty" value="1">
+          <button type="submit" class="btn-cart">+ Panier</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card" style="text-align:center;padding:3rem">
+  <p class="text-muted">Aucun produit dans cette catégorie.</p>
+</div>
+{% endif %}
+
+{% endif %}
+
+<script>
+// ⚠️ XSS DOM : sortParam injecté sans encodage dans innerHTML
+var sortParam = "{{ sort }}";
+document.getElementById('sort-display').innerHTML = sortParam;
+</script>
+
+{% endblock %}

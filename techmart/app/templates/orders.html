@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Mes commandes{% endblock %}
+{% block content %}
+
+<h1 class="section-title" style="margin-bottom:1.2rem">📦 Mes commandes</h1>
+
+{% if orders %}
+<div class="card">
+  <table>
+    <thead>
+      <tr>
+        <th>Numéro</th>
+        <th>Date</th>
+        <th>Paiement</th>
+        <th>Total TTC</th>
+        <th>Statut</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for o in orders %}
+      <tr>
+        <td><strong>{{ o.order_number or ('#'+o.id|string) }}</strong></td>
+        <td style="color:var(--muted);font-size:.85rem">{{ o.created_at|dt }}</td>
+        <td style="font-size:.85rem">
+          {% if o.payment_method == 'techcoins' %}
+            <span style="color:#f59e0b;font-weight:600">🪙 TechCoins</span>
+          {% else %}
+            <span style="color:var(--muted)">💳 Carte</span>
+          {% endif %}
+        </td>
+        <td class="fw-bold" style="color:var(--accent)">{{ "%.2f"|format(o.total) }} €</td>
+        <td>
+          {% if o.status == 'delivered' %}<span class="badge badge-success">✅ Livré</span>
+          {% elif o.status == 'shipped' %}<span class="badge badge-info">🚚 Expédié</span>
+          {% elif o.status == 'processing' %}<span class="badge badge-warning">⏳ En cours</span>
+          {% elif o.status == 'cancelled' %}<span class="badge badge-danger">❌ Annulé</span>
+          {% else %}<span class="badge badge-secondary">{{ o.status }}</span>{% endif %}
+        </td>
+        <td><a href="/orders/{{ o.id }}" class="btn btn-outline btn-sm">Voir →</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="card" style="text-align:center;padding:3rem">
+  <div style="font-size:3rem;margin-bottom:1rem">📦</div>
+  <h3>Aucune commande</h3>
+  <p style="color:var(--muted);margin:.5rem 0 1.5rem">Découvrez nos produits high-tech premium</p>
+  <a href="/products" class="btn btn-primary mt-2">Faire mes premiers achats</a>
+</div>
+{% endif %}
+{% endblock %}

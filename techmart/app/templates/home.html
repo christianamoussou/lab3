@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}Accueil{% endblock %}
+{% block content %}
+
+<!-- Hero -->
+<div class="hero" style="margin:-1.5rem -1.5rem 1.5rem;border-radius:0">
+  <h1>Bienvenue sur <span>TechMart</span></h1>
+  <div style="display:flex;gap:.8rem;justify-content:center;flex-wrap:wrap">
+    <a href="/products" class="btn btn-primary btn-lg">Explorer les produits</a>
+    <a href="/search?q=" class="btn btn-outline btn-lg" style="color:#fff;border-color:rgba(255,255,255,.3)">Rechercher</a>
+  </div>
+</div>
+
+<!-- Catégories -->
+<div class="section-header"><h2 class="section-title">Nos <span>catégories</span></h2></div>
+<div class="cat-grid" style="margin-bottom:2rem">
+  {% for cat in g_categories %}
+  <a href="/category/{{ cat.id }}" class="cat-card">
+    <div class="cat-icon">{{ cat.icon }}</div>
+    <div class="cat-name">{{ cat.name }}</div>
+  </a>
+  {% endfor %}
+</div>
+
+<!-- Produits à la une -->
+<div class="section-header">
+  <h2 class="section-title">À la <span>une</span></h2>
+  <a href="/products" class="btn btn-outline btn-sm">Tout voir →</a>
+</div>
+<div class="product-grid" style="margin-bottom:2.5rem">
+  {% for p in featured %}
+  <div class="product-card" onclick="window.location='/product/{{ p.id }}'">
+    <div class="product-img" style="background:linear-gradient(135deg,{{ p.cat_color }}18,{{ p.cat_color }}35)">
+      {% if p.badge %}<span class="product-badge">{{ p.badge }}</span>{% endif %}
+      {{ p.icon }}
+    </div>
+    <div class="product-info">
+      <div class="product-cat">{{ p.cat_name }}</div>
+      <div class="product-name">{{ p.name }}</div>
+      <div class="product-rating"><span class="stars">★★★★★</span> {{ p.rating }} ({{ p.review_count }})</div>
+      <div class="product-price-row">
+        <div>
+          <div class="product-price">{{ "%.0f"|format(p.price) }} €</div>
+          {% if p.old_price %}<div class="product-old">{{ "%.0f"|format(p.old_price) }} €</div>{% endif %}
+        </div>
+        <form method="post" action="/cart/add" onclick="event.stopPropagation()">
+          <input type="hidden" name="product_id" value="{{ p.id }}">
+          <input type="hidden" name="qty" value="1">
+          <button type="submit" class="btn-cart">+ Panier</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Promotions -->
+{% if promo %}
+<div style="background:linear-gradient(135deg,#1a1a2e,#0f3460);border-radius:var(--r);padding:1.5rem;margin-bottom:2rem">
+  <div class="section-header">
+    <h2 class="section-title" style="color:#fff">Meilleures <span>promotions</span></h2>
+    <a href="/products" class="btn btn-primary btn-sm">Voir tout</a>
+  </div>
+  <div class="product-grid">
+    {% for p in promo %}
+    <div class="product-card" onclick="window.location='/product/{{ p.id }}'">
+      <div class="product-img" style="background:linear-gradient(135deg,{{ p.cat_color }}18,{{ p.cat_color }}35)">
+        <span class="product-badge" style="background:#16a34a">-{{ "%.0f"|format(((p.old_price-p.price)/p.old_price)*100) }}%</span>
+        {{ p.icon }}
+      </div>
+      <div class="product-info">
+        <div class="product-cat">{{ p.cat_name }}</div>
+        <div class="product-name">{{ p.name }}</div>
+        <div class="product-rating"><span class="stars">★★★★★</span> {{ p.rating }}</div>
+        <div class="product-price-row">
+          <div>
+            <div class="product-price">{{ "%.0f"|format(p.price) }} €</div>
+            <div class="product-old">{{ "%.0f"|format(p.old_price) }} €</div>
+          </div>
+          <form method="post" action="/cart/add" onclick="event.stopPropagation()">
+            <input type="hidden" name="product_id" value="{{ p.id }}">
+            <input type="hidden" name="qty" value="1">
+            <button type="submit" class="btn-cart">+ Panier</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Bestsellers -->
+<div class="section-header">
+  <h2 class="section-title">Meilleures <span>ventes</span></h2>
+  <a href="/products" class="btn btn-outline btn-sm">Voir tout →</a>
+</div>
+<div class="product-grid">
+  {% for p in bestsellers %}
+  <div class="product-card" onclick="window.location='/product/{{ p.id }}'">
+    <div class="product-img" style="background:linear-gradient(135deg,{{ p.cat_color }}18,{{ p.cat_color }}35)">
+      {% if p.badge %}<span class="product-badge">{{ p.badge }}</span>{% endif %}
+      {{ p.icon }}
+    </div>
+    <div class="product-info">
+      <div class="product-cat">{{ p.cat_name }}</div>
+      <div class="product-name">{{ p.name }}</div>
+      <div class="product-rating"><span class="stars">★★★★★</span> {{ p.rating }} ({{ p.review_count }})</div>
+      <div class="product-price-row">
+        <div>
+          <div class="product-price">{{ "%.0f"|format(p.price) }} €</div>
+          {% if p.old_price %}<div class="product-old">{{ "%.0f"|format(p.old_price) }} €</div>{% endif %}
+        </div>
+        <form method="post" action="/cart/add" onclick="event.stopPropagation()">
+          <input type="hidden" name="product_id" value="{{ p.id }}">
+          <input type="hidden" name="qty" value="1">
+          <button type="submit" class="btn-cart">+ Panier</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% endblock %}

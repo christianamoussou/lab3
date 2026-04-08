@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Commande {{ order.order_number if order else '?' }}{% endblock %}
+{% block content %}
+
+{% if not order %}
+<div class="alert alert-danger">Commande introuvable.</div>
+{% else %}
+
+<div class="breadcrumb">
+  <a href="/orders">Mes commandes</a><span class="breadcrumb-sep">›</span>
+  <span>{{ order.order_number or ('#' + order.id|string) }}</span>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 310px;gap:1.2rem;align-items:start">
+  <div>
+    <div class="card">
+      <div class="card-header">📦 Articles commandés</div>
+      {% for item in items %}
+      <div style="display:flex;align-items:center;gap:1rem;padding:.8rem 0;border-bottom:1px solid var(--border)">
+        <div style="font-size:2.5rem;width:50px;text-align:center">{{ item.icon }}</div>
+        <div style="flex:1">
+          <div style="font-weight:600;font-size:.9rem">{{ item.name }}</div>
+          <div style="font-size:.82rem;color:var(--muted)">{{ "%.2f"|format(item.price) }} € × {{ item.quantity }}</div>
+        </div>
+        <div style="font-weight:700;color:var(--accent)">{{ "%.2f"|format(item.price * item.quantity) }} €</div>
+      </div>
+      {% endfor %}
+      <div style="display:flex;justify-content:flex-end;padding-top:.8rem">
+        <div style="font-size:1.1rem;font-weight:700;color:var(--accent)">Total : {{ "%.2f"|format(order.total) }} €</div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="card">
+      <div class="card-header">🧾 Détails</div>
+      <table>
+        <tr><td class="text-muted" style="font-size:.82rem;padding:7px 0">Numéro</td><td class="fw-bold">{{ order.order_number or ('#'+order.id|string) }}</td></tr>
+        <tr><td class="text-muted" style="font-size:.82rem;padding:7px 0">Client</td><td>{{ order.username }}</td></tr>
+        <tr><td class="text-muted" style="font-size:.82rem;padding:7px 0">Date</td><td>{{ order.created_at|dt }}</td></tr>
+        <tr>
+          <td class="text-muted" style="font-size:.82rem;padding:7px 0">Livraison</td>
+          <td style="font-size:.82rem">{{ order.shipping_address or '—' }}</td>
+        </tr>
+        <tr>
+          <td class="text-muted" style="font-size:.82rem;padding:7px 0">Paiement</td>
+          <td>
+            {% if order.payment_method == 'techcoins' %}
+              <span style="color:#f59e0b;font-weight:600">🪙 TechCoins</span>
+            {% else %}
+              <span>💳 Carte bancaire</span>
+            {% endif %}
+          </td>
+        </tr>
+        <tr>
+          <td class="text-muted" style="font-size:.82rem;padding:7px 0">Statut</td>
+          <td>
+            {% if order.status == 'delivered' %}<span class="badge badge-success">✅ Livré</span>
+            {% elif order.status == 'shipped' %}<span class="badge badge-info">🚚 Expédié</span>
+            {% elif order.status == 'processing' %}<span class="badge badge-warning">⏳ En cours</span>
+            {% elif order.status == 'cancelled' %}<span class="badge badge-danger">❌ Annulé</span>
+            {% else %}<span class="badge badge-secondary">{{ order.status }}</span>{% endif %}
+          </td>
+        </tr>
+        <tr style="border-top:2px solid var(--border)">
+          <td class="fw-bold" style="font-size:1rem;padding-top:10px">Total TTC</td>
+          <td class="fw-bold" style="color:var(--accent);font-size:1.1rem">{{ "%.2f"|format(order.total) }} €</td>
+        </tr>
+      </table>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:.5rem">
+      <a href="/orders" class="btn btn-outline btn-sm btn-block">← Retour aux commandes</a>
+      {% if is_own and order.status in ('processing', 'pending') %}
+      <form method="post" action="/orders/{{ order.id }}/cancel"
+            onsubmit="return confirm('Annuler cette commande ? Le paiement sera remboursé si applicable.')">
+        <button type="submit" class="btn btn-danger btn-sm btn-block">❌ Annuler la commande</button>
+      </form>
+      {% endif %}
+    </div>
+
+    {% if order.status == 'delivered' %}
+    <div class="card" style="margin-top:.8rem;padding:1rem;text-align:center">
+      <div style="font-size:.82rem;color:var(--muted)">
+        <p>✅ Livré — Satisfait ?</p>
+        <a href="/product/{{ items[0].product_id if items else 1 }}" class="btn btn-outline btn-sm mt-1">Laisser un avis</a>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,66 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Dashboard Admin{% endblock %}
+{% block admin_content %}
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <span class="stat-icon">👥</span>
+    <div class="stat-value">{{ stats.users }}</div>
+    <div class="stat-label">Utilisateurs</div>
+  </div>
+  <div class="stat-card">
+    <span class="stat-icon">📦</span>
+    <div class="stat-value">{{ stats.products }}</div>
+    <div class="stat-label">Produits</div>
+  </div>
+  <div class="stat-card">
+    <span class="stat-icon">🛒</span>
+    <div class="stat-value">{{ stats.orders }}</div>
+    <div class="stat-label">Commandes</div>
+  </div>
+  <div class="stat-card">
+    <span class="stat-icon">💰</span>
+    <div class="stat-value">{{ "%.0f"|format(stats.revenue) }}€</div>
+    <div class="stat-label">CA livré</div>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 260px;gap:1.2rem">
+  <div class="card">
+    <div class="card-header">🛒 Commandes récentes</div>
+    <table>
+      <thead><tr><th>#</th><th>Client</th><th>Total</th><th>Paiement</th><th>Statut</th><th>Date</th></tr></thead>
+      <tbody>
+        {% for o in recent_orders %}
+        <tr>
+          <td><a href="/orders/{{ o.id }}" style="font-size:.82rem">{{ o.order_number or ("#"+o.id|string) }}</a></td>
+          <td>{{ o.username }}</td>
+          <td class="fw-bold">{{ "%.0f"|format(o.total) }}€</td>
+          <td>
+            {% if o.status=='delivered' %}<span class="badge badge-success">Livré</span>
+            {% elif o.status=='shipped' %}<span class="badge badge-info">Expédié</span>
+            {% else %}<span class="badge badge-warning">{{ o.status }}</span>{% endif %}
+          </td>
+          <td style="font-size:.8rem">{% if o.payment_method=="techcoins" %}<span style="color:#f59e0b">🪙 TC</span>{% else %}<span style="color:var(--muted)">💳</span>{% endif %}</td>
+          <td style="color:var(--muted);font-size:.8rem">{{ o.created_at|dt }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-header">🏆 Top produits</div>
+    {% for p in top_products %}
+    <div style="display:flex;align-items:center;gap:.7rem;padding:7px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:1.4rem">{{ p.icon }}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:.82rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.name }}</div>
+        <div style="font-size:.75rem;color:var(--muted)">{{ p.review_count }} avis</div>
+      </div>
+      <div style="font-weight:700;color:var(--accent);font-size:.87rem;white-space:nowrap">{{ "%.0f"|format(p.price) }}€</div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

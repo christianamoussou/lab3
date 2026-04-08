@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Connexion{% endblock %}
+{% block content %}
+<div style="max-width:460px;margin:0 auto">
+  <div class="card">
+    <div class="card-header" style="text-align:center;font-size:1.2rem">🔐 Connexion</div>
+
+    {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+
+    <form method="post" action="/login" id="loginForm" novalidate>
+      <div class="form-group">
+        <label>Nom d'utilisateur</label>
+        <input type="text" name="username" id="username" placeholder="Votre identifiant" autofocus autocomplete="username" required>
+        <div id="username-err" style="color:#e94560;font-size:.75rem;margin-top:3px;display:none">Ce champ est requis.</div>
+      </div>
+      <div class="form-group">
+        <label>Mot de passe</label>
+        <div style="position:relative">
+          <input type="password" name="password" id="password" placeholder="Votre mot de passe" autocomplete="current-password" required>
+          <button type="button" onclick="togglePwd()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);font-size:.85rem" id="pwd-eye">👁</button>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;font-size:.82rem">
+        <label style="display:flex;align-items:center;gap:5px;margin:0;font-weight:400;cursor:pointer">
+          <input type="checkbox" name="remember" style="width:auto"> Se souvenir de moi
+        </label>
+        <a href="/forgot-password" style="color:var(--muted)">Mot de passe oublié ?</a>
+      </div>
+      <button type="submit" class="btn btn-primary btn-lg btn-block" id="submitBtn">Se connecter</button>
+    </form>
+
+    <hr style="margin:1.2rem 0">
+    <div style="text-align:center;font-size:.87rem">
+      Pas encore de compte ? <a href="/register">Créer un compte</a>
+    </div>
+  </div>
+</div>
+
+<script>
+function togglePwd(){
+  var p=document.getElementById('password');
+  var e=document.getElementById('pwd-eye');
+  p.type=p.type==='password'?'text':'password';
+  e.textContent=p.type==='password'?'👁':'🙈';
+}
+document.getElementById('loginForm').addEventListener('submit',function(e){
+  var u=document.getElementById('username').value.trim();
+  var err=document.getElementById('username-err');
+  if(!u){e.preventDefault();err.style.display='block';return;}
+  err.style.display='none';
+  document.getElementById('submitBtn').textContent='Connexion…';
+  document.getElementById('submitBtn').disabled=true;
+});
+</script>
+{% endblock %}

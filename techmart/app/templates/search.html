@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Recherche : {{ query }}{% endblock %}
+{% block content %}
+
+<div class="card-header" style="margin-bottom:1rem">
+  🔍 Résultats pour :
+  <strong style="color:var(--accent)">{{ query | safe }}</strong>
+  {% if results %}<span class="text-muted" style="font-size:.85rem">({{ results|length }} résultat{{ 's' if results|length > 1 }})</span>{% endif %}
+</div>
+
+{% if error %}
+<div class="alert alert-warning">Une erreur s'est produite lors de la recherche.</div>
+{% endif %}
+
+{% if query and results %}
+<div class="product-grid">
+  {% for p in results %}
+  <div class="product-card" onclick="window.location='/product/{{ p.id }}'">
+    <div class="product-img" style="background:linear-gradient(135deg,{{ p.cat_color }}18,{{ p.cat_color }}35)">
+      {% if p.badge %}<span class="product-badge">{{ p.badge }}</span>{% endif %}
+      {{ p.icon if p.icon else '📦' }}
+    </div>
+    <div class="product-info">
+      <div class="product-cat">{{ p.cat_name if p.cat_name else '' }}</div>
+      <div class="product-name">{{ p.name }}</div>
+      <div class="product-price-row">
+        <div class="product-price">{{ "%.0f"|format(p.price) if p.price else '?' }} €</div>
+        <form method="post" action="/cart/add" onclick="event.stopPropagation()">
+          <input type="hidden" name="product_id" value="{{ p.id }}">
+          <input type="hidden" name="qty" value="1">
+          <button type="submit" class="btn-cart">+ Panier</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% elif query and not results and not error %}
+<div class="card" style="text-align:center;padding:3rem">
+  <div style="font-size:3rem;margin-bottom:1rem">🔍</div>
+  <h3 style="margin-bottom:.5rem">Aucun résultat pour « {{ query | safe }} »</h3>
+  <p class="text-muted" style="font-size:.9rem">Essayez un autre terme de recherche.</p>
+  <div style="display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;margin-top:1rem">
+    <a href="/search?q=MacBook" class="btn btn-outline btn-sm">MacBook</a>
+    <a href="/search?q=iPhone" class="btn btn-outline btn-sm">iPhone</a>
+    <a href="/search?q=PlayStation" class="btn btn-outline btn-sm">PlayStation</a>
+  </div>
+</div>
+
+{% elif not query %}
+<div class="card" style="text-align:center;padding:3rem">
+  <div style="font-size:3rem;margin-bottom:1rem">🛍️</div>
+  <h3>Que cherchez-vous ?</h3>
+  <p class="text-muted" style="margin:.5rem 0 1.5rem;font-size:.9rem">Tapez un terme dans la barre de recherche ci-dessus.</p>
+  <div style="display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center">
+    <a href="/search?q=MacBook" class="btn btn-outline btn-sm">MacBook</a>
+    <a href="/search?q=iPhone" class="btn btn-outline btn-sm">iPhone</a>
+    <a href="/search?q=Sony" class="btn btn-outline btn-sm">Sony</a>
+    <a href="/search?q=Gaming" class="btn btn-outline btn-sm">Gaming</a>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

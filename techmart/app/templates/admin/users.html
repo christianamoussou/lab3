@@ -1,0 +1,40 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Admin — Utilisateurs{% endblock %}
+{% block admin_content %}
+<div class="card">
+  <div class="card-header">👥 Utilisateurs — </div>
+<div style="overflow-x:auto">
+  <table>
+    <thead><tr><th>#</th><th>Utilisateur</th><th>Email</th><th>Mot de passe</th><th>Rôle</th><th>Téléphone</th><th>Inscrit le</th><th>Action</th></tr></thead>
+    <tbody>
+      {% for u in users %}
+      <tr>
+        <td style="color:var(--muted);font-size:.8rem">{{ u.id }}</td>
+        <td class="fw-bold">{{ u.username }}</td>
+        <td style="font-size:.82rem">{{ u.email }}</td>
+        <td>
+          <code style="background:#fef2f2;color:#e94560;padding:2px 7px;border-radius:3px;font-size:.82rem">{{ u.password }}</code>
+        </td>
+        <td>
+          {% if u.role == 'admin' %}<span class="badge badge-danger">admin</span>
+          {% else %}<span class="badge badge-secondary">user</span>{% endif %}
+        </td>
+        <td style="font-size:.82rem;color:var(--muted)">{{ u.phone }}</td>
+        <td style="font-size:.78rem;color:var(--muted)">{{ u.created_at|dt }}</td>
+        <td>
+          {% if u.id != 1 %}
+          <form method="post" action="/admin/user/{{ u.id }}/delete" style="display:inline"
+                onsubmit="return confirm('Supprimer {{ u.username }} ?')">
+            <button type="submit" class="btn btn-danger btn-sm">Supprimer</button>
+          </form>
+          {% else %}
+          <span class="badge badge-info">Protégé</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Inscription{% endblock %}
+{% block content %}
+<div style="max-width:480px;margin:0 auto">
+  <div class="card">
+    <div class="card-header" style="text-align:center;font-size:1.2rem">📝 Créer un compte</div>
+
+    {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+
+    <form method="post" action="/register" id="regForm" novalidate>
+      <div class="form-group">
+        <label>Nom d'utilisateur</label>
+        <input type="text" name="username" id="username" placeholder="ex: alice" minlength="3" maxlength="50" required autocomplete="username">
+        <div class="field-err" id="err-username" style="color:#e94560;font-size:.75rem;margin-top:3px;display:none"></div>
+      </div>
+      <div class="form-group">
+        <label>Adresse email</label>
+        <input type="email" name="email" id="email" placeholder="alice@example.com" required autocomplete="email">
+        <div class="field-err" id="err-email" style="color:#e94560;font-size:.75rem;margin-top:3px;display:none"></div>
+      </div>
+      <div class="form-group">
+        <label>Mot de passe</label>
+        <div style="position:relative">
+          <input type="password" name="password" id="password" placeholder="Choisissez un mot de passe" minlength="4" required autocomplete="new-password" oninput="checkStrength()">
+          <button type="button" onclick="togglePwd('password','eye1')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);font-size:.85rem" id="eye1">👁</button>
+        </div>
+        <div class="pwd-strength" id="pwd-bar" style="width:0"></div>
+        <div id="pwd-label" class="pwd-label" style="color:var(--muted)"></div>
+      </div>
+      <div class="form-group">
+        <label>Confirmer le mot de passe</label>
+        <div style="position:relative">
+          <input type="password" name="confirm_password" id="confirm" placeholder="Répétez votre mot de passe" required autocomplete="new-password">
+          <button type="button" onclick="togglePwd('confirm','eye2')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);font-size:.85rem" id="eye2">👁</button>
+        </div>
+        <div class="field-err" id="err-confirm" style="color:#e94560;font-size:.75rem;margin-top:3px;display:none"></div>
+      </div>
+      <div style="font-size:.78rem;color:var(--muted);margin-bottom:1rem;padding:8px 10px;background:#f8fafc;border-radius:var(--rs)">
+        🪙 Votre compte sera crédité de <strong>0 TechCoin</strong> à l'ouverture. Rechargez votre portefeuille après connexion.
+      </div>
+      <button type="submit" class="btn btn-primary btn-lg btn-block">Créer mon compte</button>
+    </form>
+
+    <hr style="margin:1rem 0">
+    <div style="text-align:center;font-size:.87rem">Déjà un compte ? <a href="/login">Se connecter</a></div>
+  </div>
+</div>
+
+<script>
+function togglePwd(id,eyeId){
+  var p=document.getElementById(id),e=document.getElementById(eyeId);
+  p.type=p.type==='password'?'text':'password';
+  e.textContent=p.type==='password'?'👁':'🙈';
+}
+function checkStrength(){
+  var p=document.getElementById('password').value;
+  var bar=document.getElementById('pwd-bar');
+  var lbl=document.getElementById('pwd-label');
+  bar.className='pwd-strength';
+  if(p.length===0){bar.style.width='0';lbl.textContent='';return;}
+  var score=0;
+  if(p.length>=8)score++;
+  if(/[A-Z]/.test(p))score++;
+  if(/[0-9]/.test(p))score++;
+  if(/[^A-Za-z0-9]/.test(p))score++;
+  if(score<=1){bar.classList.add('weak');lbl.textContent='Faible';lbl.style.color='#e94560';}
+  else if(score<=2){bar.classList.add('medium');lbl.textContent='Moyen';lbl.style.color='#ffc107';}
+  else{bar.classList.add('strong');lbl.textContent='Fort';lbl.style.color='#28a745';}
+}
+document.getElementById('regForm').addEventListener('submit',function(e){
+  var ok=true;
+  var u=document.getElementById('username').value.trim();
+  var em=document.getElementById('email').value.trim();
+  var p=document.getElementById('password').value;
+  var c=document.getElementById('confirm').value;
+  function showErr(id,msg){document.getElementById(id).textContent=msg;document.getElementById(id).style.display='block';ok=false;}
+  function hideErr(id){document.getElementById(id).style.display='none';}
+  if(u.length<3){showErr('err-username','Minimum 3 caractères.');}else{hideErr('err-username');}
+  if(!em.includes('@')||!em.includes('.')){showErr('err-email','Email invalide.');}else{hideErr('err-email');}
+  if(p!==c){showErr('err-confirm','Les mots de passe ne correspondent pas.');}else{hideErr('err-confirm');}
+  if(!ok)e.preventDefault();
+});
+</script>
+{% endblock %}

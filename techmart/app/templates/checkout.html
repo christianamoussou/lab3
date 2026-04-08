@@ -1,0 +1,253 @@
+{% extends "base.html" %}
+{% block title %}Paiement{% endblock %}
+{% block content %}
+
+<div class="steps" style="margin-bottom:1.5rem">
+  <div class="step-num done">1</div><div class="step-label">Panier</div>
+  <div class="step-line"></div>
+  <div class="step-num active">2</div><div class="step-label active">Paiement</div>
+  <div class="step-line"></div>
+  <div class="step-num">3</div><div class="step-label">Confirmation</div>
+</div>
+
+{% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+
+<div class="layout-sidebar">
+  <!-- LEFT : Adresse + Paiement -->
+  <div>
+    <div class="card">
+      <div class="card-header">📦 Adresse de livraison</div>
+      <div class="form-group">
+        <label>Nom complet</label>
+        <input type="text" id="f-name" placeholder="{{ current_user or 'Prénom Nom' }}" value="{{ current_user or '' }}">
+      </div>
+      <div class="form-group">
+        <label>Adresse de livraison</label>
+        <textarea id="f-address" style="height:70px" placeholder="15 rue de la Paix, 75001 Paris">{{ user_address }}</textarea>
+      </div>
+    </div>
+
+    <!-- Paiement -->
+    <div class="card">
+      <div class="card-header">💳 Mode de paiement</div>
+
+      <div class="pay-tab-nav">
+        <button class="pay-tab-btn active" onclick="switchPay('card',this)">💳 Carte bancaire</button>
+        <button class="pay-tab-btn" onclick="switchPay('tc',this)">🪙 TechCoins</button>
+      </div>
+
+      <!-- Carte bancaire -->
+      <div class="pay-section active" id="pay-card">
+        <div class="card-preview" id="card-preview">
+          <div class="card-chip"></div>
+          <div class="card-num" id="prev-num">•••• •••• •••• ••••</div>
+          <div class="card-meta">
+            <div><div style="font-size:.65rem;opacity:.6">TITULAIRE</div><div id="prev-name">VOTRE NOM</div></div>
+            <div><div style="font-size:.65rem;opacity:.6">EXPIRE</div><div id="prev-exp">MM/AA</div></div>
+            <div style="font-size:1.4rem;opacity:.6">VISA</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Numéro de carte</label>
+          <input type="tel" id="card-number" placeholder="1234 5678 9012 3456" maxlength="19"
+                 oninput="fmtCard(this)" autocomplete="cc-number">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem">
+          <div class="form-group">
+            <label>Date d'expiration</label>
+            <input type="tel" id="card-expiry" placeholder="MM/AA" maxlength="5"
+                   oninput="fmtExp(this)" autocomplete="cc-exp">
+          </div>
+          <div class="form-group">
+            <label>CVV</label>
+            <input type="tel" id="card-cvv" placeholder="123" maxlength="3" autocomplete="cc-csc">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Nom du titulaire</label>
+          <input type="text" id="card-name" placeholder="ALICE DUPONT" oninput="document.getElementById('prev-name').textContent=this.value.toUpperCase()||'VOTRE NOM'" autocomplete="cc-name">
+        </div>
+        <div style="font-size:.75rem;color:var(--muted);display:flex;align-items:center;gap:5px">
+          🔒 Paiement chiffré SSL — <span style="color:var(--success)">Sécurisé</span>
+        </div>
+        <div id="card-error" class="alert alert-danger" style="display:none;margin-top:.7rem"></div>
+      </div>
+
+      <!-- TechCoins -->
+      <div class="pay-section" id="pay-tc">
+        <div style="background:linear-gradient(135deg,#1a1a2e,#0f3460);border-radius:var(--r);padding:1.3rem;color:#fff;margin-bottom:1rem;text-align:center">
+          <div style="font-size:2rem;margin-bottom:.3rem">🪙</div>
+          <div style="font-size:.8rem;color:#94a3b8;margin-bottom:.3rem">Solde disponible</div>
+          <div style="font-size:2rem;font-weight:800;color:#fbbf24" id="tc-balance">{{ "%.2f"|format(wallet_balance or 0) }} TC</div>
+          <div style="font-size:.75rem;color:#94a3b8;margin-top:.3rem">1 TechCoin = 1,00 €</div>
+        </div>
+        <div id="tc-msg" style="font-size:.85rem;text-align:center;padding:.5rem;border-radius:var(--rs)"></div>
+        <div style="font-size:.78rem;color:var(--muted);text-align:center;margin-top:.5rem">
+          Solde insuffisant ? <a href="/wallet">Recharger mon portefeuille</a>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn btn-primary btn-lg btn-block" onclick="submitOrder()" id="submit-btn" style="font-size:1rem">
+      🔒 Passer la commande — {{ "%.2f"|format(final_total) }} €
+    </button>
+  </div>
+
+  <!-- RIGHT : Récapitulatif -->
+  <div>
+    <div class="card">
+      <div class="card-header">🧾 Récapitulatif</div>
+      {% for item in items %}
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:.87rem">
+        <span>{{ item.product.icon }} {{ item.product.name }} <span style="color:var(--muted)">× {{ item.qty }}</span></span>
+        <span class="fw-bold">{{ "%.2f"|format(item.subtotal) }} €</span>
+      </div>
+      {% endfor %}
+
+      <table style="margin-top:.8rem">
+        <tr><td style="font-size:.85rem">Sous-total</td><td class="text-right fw-bold">{{ "%.2f"|format(total) }} €</td></tr>
+        {% if discount > 0 %}
+        <tr><td style="font-size:.85rem;color:var(--success)">Remise ({{ discount }}%)</td><td class="text-right fw-bold" style="color:var(--success)">-{{ "%.2f"|format(total*discount/100) }} €</td></tr>
+        {% endif %}
+        <tr>
+          <td style="font-size:.85rem">Livraison</td>
+          <td class="text-right fw-bold">{% if shipping == 0 %}<span style="color:var(--success)">Gratuite 🎁</span>{% else %}{{ "%.2f"|format(shipping) }} €{% endif %}</td>
+        </tr>
+        <tr><td style="font-size:.85rem;color:var(--muted)">TVA (20%)</td><td class="text-right" style="color:var(--muted)">{{ "%.2f"|format(tva) }} €</td></tr>
+        <tr style="font-size:1.1rem;border-top:2px solid var(--border)">
+          <td class="fw-bold">Total TTC</td>
+          <td class="text-right fw-bold" style="color:var(--accent)">{{ "%.2f"|format(final_total) }} €</td>
+        </tr>
+      </table>
+
+      <div style="margin-top:1rem;font-size:.75rem;color:var(--muted);display:flex;flex-direction:column;gap:3px">
+        <span>✅ Stock vérifié en temps réel</span>
+        <span>🔒 Connexion sécurisée SSL/TLS</span>
+        <span>↩️ Retour sous 30 jours</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modale de confirmation -->
+<div id="confirm-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:none;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:var(--r);padding:2rem;max-width:440px;width:90%;box-shadow:var(--sh2)">
+    <h3 style="margin-bottom:1rem;font-size:1.1rem">✅ Confirmer votre commande</h3>
+    <div id="modal-summary" style="font-size:.87rem;color:var(--muted);margin-bottom:1.2rem;line-height:1.8"></div>
+    <div style="display:flex;gap:.8rem">
+      <button class="btn btn-outline btn-block" onclick="closeModal()" style="flex:1">Annuler</button>
+      <button class="btn btn-primary btn-block" onclick="doSubmit()" style="flex:1;font-size:.9rem">Confirmer le paiement</button>
+    </div>
+  </div>
+</div>
+
+<!-- Formulaire caché pour soumission -->
+<form id="order-form" method="post" action="/checkout" style="display:none">
+  <input type="hidden" name="payment_method" id="hid-method">
+  <input type="hidden" name="address" id="hid-address">
+  <input type="hidden" name="card_number" id="hid-cardnum">
+  <input type="hidden" name="card_expiry" id="hid-cardexp">
+  <input type="hidden" name="card_cvv" id="hid-cardcvv">
+  <input type="hidden" name="card_name" id="hid-cardname">
+</form>
+
+<script>
+var currentPay = 'card';
+var finalTotal = {{ final_total }};
+var walletBalance = {{ wallet_balance or 0 }};
+
+function switchPay(mode, btn) {
+  currentPay = mode;
+  document.querySelectorAll('.pay-tab-btn').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  document.querySelectorAll('.pay-section').forEach(function(s){s.classList.remove('active');});
+  document.getElementById('pay-'+mode).classList.add('active');
+  if(mode==='tc') checkTCBalance();
+}
+
+function checkTCBalance() {
+  fetch('/api/v1/wallet/balance-web').then(function(r){return r.json();}).then(function(d){
+    walletBalance = d.balance;
+    document.getElementById('tc-balance').textContent = d.balance.toFixed(2) + ' TC';
+    var msg = document.getElementById('tc-msg');
+    if(d.balance >= finalTotal) {
+      msg.textContent = '✅ Solde suffisant pour cette commande.';
+      msg.style.background = '#f0fdf4'; msg.style.color = '#14532d';
+    } else {
+      msg.textContent = '❌ Solde insuffisant. Il vous manque ' + (finalTotal - d.balance).toFixed(2) + ' TC.';
+      msg.style.background = '#fef2f2'; msg.style.color = '#991b1b';
+    }
+  }).catch(function(){});
+}
+
+function luhn(n) {
+  var s=n.replace(/\D/g,''), sum=0, alt=false;
+  for(var i=s.length-1;i>=0;i--){var d=+s[i];if(alt){d*=2;if(d>9)d-=9;}sum+=d;alt=!alt;}
+  return sum%10===0;
+}
+
+function fmtCard(el) {
+  var v=el.value.replace(/\D/g,'').substring(0,16);
+  el.value=v.replace(/(.{4})/g,'$1 ').trim();
+  document.getElementById('prev-num').textContent=v.padEnd(16,'•').replace(/(.{4})/g,'$1 ').trim();
+}
+
+function fmtExp(el) {
+  var v=el.value.replace(/\D/g,'');
+  if(v.length>=2) v=v.substring(0,2)+'/'+v.substring(2,4);
+  el.value=v;
+  document.getElementById('prev-exp').textContent=el.value||'MM/AA';
+}
+
+function submitOrder() {
+  if(currentPay==='card') {
+    var cn=document.getElementById('card-number').value.replace(/\s/g,'');
+    var exp=document.getElementById('card-expiry').value;
+    var cvv=document.getElementById('card-cvv').value;
+    var name=document.getElementById('card-name').value.trim();
+    var err=document.getElementById('card-error');
+    if(!cn||cn.length<16){err.textContent='Numéro de carte incomplet.';err.style.display='block';return;}
+    if(!luhn(cn)){err.textContent='Numéro de carte invalide.';err.style.display='block';return;}
+    if(!exp||exp.length<5){err.textContent='Date d\'expiration invalide.';err.style.display='block';return;}
+    if(!cvv||cvv.length<3){err.textContent='CVV invalide.';err.style.display='block';return;}
+    err.style.display='none';
+  }
+  if(currentPay==='tc' && walletBalance < finalTotal) {
+    alert('Solde TechCoins insuffisant. Rechargez votre portefeuille.');
+    return;
+  }
+  var addr=(document.getElementById('f-address').value||'').trim();
+  if(!addr){alert('Veuillez saisir une adresse de livraison.');return;}
+  showModal(addr);
+}
+
+function showModal(addr) {
+  var payLabel = currentPay==='card'
+    ? '💳 Carte se terminant par '+document.getElementById('card-number').value.slice(-4)
+    : '🪙 TechCoins ('+walletBalance.toFixed(2)+' TC disponibles)';
+  document.getElementById('modal-summary').innerHTML =
+    '<b>Adresse :</b> '+(document.getElementById('f-address').value||'Non renseignée')+'<br>'+
+    '<b>Paiement :</b> '+payLabel+'<br>'+
+    '<b>Total TTC :</b> <span style="color:var(--accent);font-weight:700">'+finalTotal.toFixed(2)+' €</span>';
+  document.getElementById('confirm-modal').style.display='flex';
+}
+
+function closeModal(){document.getElementById('confirm-modal').style.display='none';}
+
+function doSubmit() {
+  var addr=document.getElementById('f-address').value;
+  document.getElementById('hid-method').value = (currentPay==='tc') ? 'techcoins' : currentPay;
+  document.getElementById('hid-address').value=addr;
+  if(currentPay==='card'){
+    document.getElementById('hid-cardnum').value=document.getElementById('card-number').value.replace(/\s/g,'');
+    document.getElementById('hid-cardexp').value=document.getElementById('card-expiry').value;
+    document.getElementById('hid-cardcvv').value=document.getElementById('card-cvv').value;
+    document.getElementById('hid-cardname').value=document.getElementById('card-name').value;
+  }
+  document.getElementById('order-form').submit();
+}
+
+window.addEventListener('click',function(e){if(e.target.id==='confirm-modal')closeModal();});
+</script>
+{% endblock %}
